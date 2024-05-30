@@ -10,10 +10,10 @@ class CodeChecker:
     def register_plugin(self, name, plugin_module):
         self.plugins[name] = plugin_module
 
-    def run_check(self, directory, checker):
+    def run_check(self, source, checker):
         if checker in self.plugins:
             plugin = self.plugins[checker](self.verbose)
-            return plugin.check(directory)
+            return plugin.check(source)
         else:
             raise ValueError(f"Checker '{checker}' is not registered.")
 
@@ -22,10 +22,10 @@ class PylintPlugin:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-    def check(self, directory):
+    def check(self, source):
         if self.verbose:
-            print(f"Running pylint checks on {directory}...")
-        result = subprocess.run(["pylint", directory], capture_output=True, text=True)
+            print(f"Running pylint checks on {source}...")
+        result = subprocess.run(["pylint", source], capture_output=True, text=True)
         if self.verbose:
             print(result.stdout)
             print(result.stderr)
@@ -36,10 +36,10 @@ class Flake8Plugin:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-    def check(self, directory):
+    def check(self, source):
         if self.verbose:
-            print(f"Running flake8 checks on {directory}...")
-        result = subprocess.run(["flake8", directory], capture_output=True, text=True)
+            print(f"Running flake8 checks on {source}...")
+        result = subprocess.run(["flake8", source], capture_output=True, text=True)
         if self.verbose:
             print(result.stdout)
             print(result.stderr)
@@ -50,10 +50,10 @@ class PyDocStylePlugin:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-    def check(self, directory):
+    def check(self, source):
         if self.verbose:
-            print(f"Running pydocstyle checks on {directory}...")
-        result = subprocess.run(["pydocstyle", directory], capture_output=True, text=True)
+            print(f"Running pydocstyle checks on {source}...")
+        result = subprocess.run(["pydocstyle", source], capture_output=True, text=True)
         if self.verbose:
             print(result.stdout)
             print(result.stderr)
@@ -66,8 +66,8 @@ def main():
                         required=True, help="The code checker tool to use")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Increase output verbosity")
-    parser.add_argument("-d", "--directory", required=True,
-                        help="The directory of the code to check")
+    parser.add_argument("-s", "--source", required=True,
+                        help="The source file or directory to check")
     args = parser.parse_args()
 
     code_checker = CodeChecker(verbose=args.verbose)
@@ -76,7 +76,7 @@ def main():
     code_checker.register_plugin("flake8", Flake8Plugin)
     code_checker.register_plugin("pydocstyle", PyDocStylePlugin)
 
-    result = code_checker.run_check(args.directory, args.tool)
+    result = code_checker.run_check(args.source, args.tool)
     if result:
         print(result)
 
