@@ -1,4 +1,5 @@
 import argparse
+import re
 import subprocess
 
 
@@ -14,13 +15,13 @@ class CodeChecker:
         if checker in self.plugins:
             plugin = self.plugins[checker](self.verbose)
             return plugin.check(source)
-        else:
-            raise ValueError(f"Checker '{checker}' is not registered.")
+        raise ValueError(f"Checker '{checker}' is not registered.")
 
 
 class PylintPlugin:
     def __init__(self, verbose=False):
         self.verbose = verbose
+        self.scorelimit = 8.0  # the score must be at least this number for the test to succeed
 
     def check(self, source):
         if self.verbose:
@@ -29,7 +30,14 @@ class PylintPlugin:
         if self.verbose:
             print(result.stdout)
             print(result.stderr)
-        return result.stdout if not self.verbose else None
+        # Extracting the pylint score using regex
+        score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", result.stdout)
+        score = score_match.group(1) if score_match else "Score not found"
+        print(f"Pylint Score: {score}")
+        if float(score) < self.scorelimit:
+            print("Pylint check failed.")
+            return None
+        return result.stdout
 
 
 class Flake8Plugin:
@@ -76,9 +84,7 @@ def main():
     code_checker.register_plugin("flake8", Flake8Plugin)
     code_checker.register_plugin("pydocstyle", PyDocStylePlugin)
 
-    result = code_checker.run_check(args.source, args.tool)
-    if result:
-        print(result)
+    _ = code_checker.run_check(args.source, args.tool)
 
 
 if __name__ == "__main__":
