@@ -2,7 +2,7 @@ import argparse
 import re
 import shutil
 import subprocess
-from typing import Dict, Optional
+from typing import Optional
 
 
 class CodeChecker:
@@ -14,7 +14,7 @@ class CodeChecker:
 
         :param verbose: Whether to print detailed output (bool).
         """
-        self.plugins: Dict[str, type] = {}
+        self.plugins: dict[str, type] = {}
         self.verbose = verbose
 
     def register_plugin(self, name: str, plugin_module: type) -> None:
