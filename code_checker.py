@@ -4,6 +4,8 @@ import shutil
 import subprocess
 from typing import Optional
 
+"""A tool to run code checking plugins on a source file or directory."""
+
 
 class CodeChecker:
     """A class to manage and run code checking plugins."""
@@ -38,6 +40,7 @@ class CodeChecker:
         if checker in self.plugins:
             plugin = self.plugins[checker](self.verbose)
             return plugin.check(source)
+
         raise ValueError(f"Checker '{checker}' is not registered.")
 
 
@@ -151,7 +154,7 @@ class PyDocStylePlugin:
 
 
 def main():
-    """Main function to parse arguments and run the code checker."""
+    """Parse arguments and run the code checker."""
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Code Checker Tool")
     parser.add_argument("-t", "--tool", choices=["pylint", "flake8", "pydocstyle"],
@@ -176,4 +179,5 @@ def main():
 
 
 if __name__ == "__main__":
+    """Run the main function."""
     main()
