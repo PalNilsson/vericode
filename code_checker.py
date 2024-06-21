@@ -169,7 +169,10 @@ def main():
     code_checker.register_plugin("pydocstyle", PyDocStylePlugin)
 
     # Run the code checker
-    _ = code_checker.run_check(args.source, args.tool)
+    try:
+        _ = code_checker.run_check(args.source, args.tool)
+    except (ValueError, EnvironmentError) as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":
