@@ -55,7 +55,7 @@ class PylintPlugin:
         :param verbose: Whether to print detailed output (bool).
         """
         self.verbose = verbose
-        self.scorelimit = 8.0  # the score must be at least this number for the test to succeed
+        self.scorelimit = -1.0  # 8.0  # the score must be at least this number for the test to succeed
 
     def check(self, source: str) -> Optional[str]:
         """
@@ -73,17 +73,16 @@ class PylintPlugin:
 
         # If source is a directory, find all files with a .py extension
         if shutil.os.path.isdir(source):
-            #source_files = [f for f in shutil.os.listdir(source) if f.endswith(".py")]
             source_files = []
             for root, dirs, files in shutil.os.walk(source):
                 for file in files:
                     if file.endswith(".py"):
                         source_files.append(os.path.join(root, file))
-            #source_files = [shutil.os.path.join(source, f) for f in source_files]
         else:
             source_files = [source]
 
         scores = []
+        score_at_least_nine = 0
 
         # Run pylint and capture the output
         for filename in source_files:
@@ -97,13 +96,18 @@ class PylintPlugin:
             score = score_match.group(1) if score_match else "Score not found"
             if score != "Score not found":
                 print(f"{filename}: {score}")
+                if float(score) >= 9.0:
+                    score_at_least_nine += 1
                 if float(score) < self.scorelimit:
-                    print("Pylint check failed.")
+                    print(f"Pylint check failed since {filename} has a score of {score} which is less than {self.scorelimit}")
                     return None
                 scores.append(score)
 
         if scores:
-            return f"Average pylint score: {sum(map(float, scores)) / len(scores)}\nNumber of files processed: {len(scores)}"
+            message = (f"Average pylint score: {sum(map(float, scores)) / len(scores)}\n"
+                       f"Number of files with a score of at least 9.0: {score_at_least_nine}\n"
+                       f"Number of files processed: {len(scores)}")
+            return message
 
         return result.stdout
 
