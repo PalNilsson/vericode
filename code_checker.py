@@ -52,13 +52,15 @@ class CodeChecker:
 class PylintPlugin:
     """A plugin to run pylint checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None) -> None:
         """
         Initialize the PylintPlugin with an optional verbosity setting.
 
-        :param verbose: Whether to print detailed output (bool).
+        :param verbose: Whether to print detailed output (bool)
+        :param optional: Optional parameter for compatibility with other plugins (Any).
         """
         self.verbose = verbose
+        self.optional = optional
         self.scorelimit = -1.0  # 8.0  # the score must be at least this number for the test to succeed
 
     def get_source_files(self, source: str) -> list[str]:
@@ -139,13 +141,15 @@ class PylintPlugin:
 class Flake8Plugin:
     """A plugin to run flake8 checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None) -> None:
         """
         Initialize the Flake8Plugin with an optional verbosity setting.
 
-        :param verbose: Whether to print detailed output (bool).
+        :param verbose: Whether to print detailed output (bool)
+        :param optional: Optional parameter for compatibility with other plugins (Any).
         """
         self.verbose = verbose
+        self.optional = optional
 
     def check(self, source: str) -> Optional[str]:
         """
@@ -172,13 +176,15 @@ class Flake8Plugin:
 class PyDocStylePlugin:
     """A plugin to run pydocstyle checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None) -> None:
         """
         Initialize the PyDocStylePlugin with an optional verbosity setting.
 
-        :param verbose: Whether to print detailed output (bool).
+        :param verbose: Whether to print detailed output (bool)
+        :param optional: Optional parameter for compatibility with other plugins (Any).
         """
         self.verbose = verbose
+        self.optional = optional
 
     def check(self, source: str, optional: Any) -> Optional[str]:
         """
