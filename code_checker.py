@@ -70,19 +70,29 @@ class PylintPlugin:
         if self.verbose:
             print(f"Running pylint checks on {source}...")
 
-        # Run pylint and capture the output
-        result = subprocess.run(["pylint", source], capture_output=True, text=True)
-        if self.verbose:
-            print(result.stdout)
-            print(result.stderr)
+        # If source is a directory, find all files with a .py extension
+        if shutil.os.path.isdir(source):
+            source_files = [f for f in shutil.os.listdir(source) if f.endswith(".py")]
+            source_files = [shutil.os.path.join(source, f) for f in source_files]
+        else:
+            source_files = [source]
 
-        # Extracting the pylint score using regex
-        score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", result.stdout)
-        score = score_match.group(1) if score_match else "Score not found"
-        print(f"Pylint Score: {score}")
-        if float(score) < self.scorelimit:
-            print("Pylint check failed.")
-            return None
+        # Run pylint and capture the output
+        for filename in source_files:
+            #path = os.path.join(source, filename)
+            result = subprocess.run(["pylint", filename], capture_output=True, text=True)
+            if self.verbose:
+                print(result.stdout)
+                print(result.stderr)
+
+            # Extracting the pylint score using regex
+            score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", result.stdout)
+            score = score_match.group(1) if score_match else "Score not found"
+            if score != "Score not found":
+                print(f"{filename}: {score}")
+                if float(score) < self.scorelimit:
+                    print("Pylint check failed.")
+                    return None
 
         return result.stdout
 
