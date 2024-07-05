@@ -82,6 +82,7 @@ class PylintPlugin:
             source_files = [source]
 
         scores = []
+        score_at_least_eight = 0
         score_at_least_nine = 0
 
         # Run pylint and capture the output
@@ -96,6 +97,8 @@ class PylintPlugin:
             score = score_match.group(1) if score_match else "Score not found"
             if score != "Score not found":
                 print(f"{filename}: {score}")
+                if float(score) >= 8.0:
+                    score_at_least_eight += 1
                 if float(score) >= 9.0:
                     score_at_least_nine += 1
                 if float(score) < self.scorelimit:
@@ -105,6 +108,7 @@ class PylintPlugin:
 
         if scores:
             message = (f"Average pylint score: {sum(map(float, scores)) / len(scores)}\n"
+                       f"Number of files with a score of at least 8.0: {score_at_least_eight}\n"
                        f"Number of files with a score of at least 9.0: {score_at_least_nine}\n"
                        f"Number of files processed: {len(scores)}")
             return message
