@@ -3,7 +3,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Optional
+from typing import Optional, Any
 
 """A tool to run code checking plugins on a source file or directory."""
 
@@ -11,14 +11,18 @@ from typing import Optional
 class CodeChecker:
     """A class to manage and run code checking plugins."""
 
-    def __init__(self, verbose: bool = False) -> None:
+    optional = None
+
+    def __init__(self, verbose: bool = False, optional: Any = None) -> None:
         """
         Initialize the CodeChecker with an optional verbosity setting.
 
-        :param verbose: Whether to print detailed output (bool).
+        :param verbose: Whether to print detailed output (bool)
+        :param optional: Optional parameter for compatibility with other plugins (Any).
         """
         self.plugins: dict[str, type] = {}
         self.verbose = verbose
+        self.optional = optional
 
     def register_plugin(self, name: str, plugin_module: type) -> None:
         """
@@ -107,15 +111,20 @@ class PylintPlugin:
             score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", result.stdout)
             score = score_match.group(1) if score_match else "Score not found"
             if score != "Score not found":
-                print(f"{filename}: {score}")
-                if float(score) >= 8.0:
-                    score_at_least_eight += 1
-                if float(score) >= 9.0:
-                    score_at_least_nine += 1
-                if float(score) < self.scorelimit:
-                    print(f"Pylint check failed since {filename} has a score of {score} which is less than {self.scorelimit}")
-                    return None
-                scores.append(score)
+                # only report scores less than the given number
+                if self.optional and isinstance(self.optional, float):
+                    if float(score) <= float(self.optional):
+                        print(f"{filename}: {score}")
+                else:  # normal processing
+                    print(f"{filename}: {score}")
+                    if float(score) >= 8.0:
+                        score_at_least_eight += 1
+                    if float(score) >= 9.0:
+                        score_at_least_nine += 1
+                    if float(score) < self.scorelimit:
+                        print(f"Pylint check failed since {filename} has a score of {score} which is less than {self.scorelimit}")
+                        return None
+                    scores.append(score)
 
         if scores:
             message = (f"Average pylint score: {sum(map(float, scores)) / len(scores)}\n"
@@ -171,11 +180,12 @@ class PyDocStylePlugin:
         """
         self.verbose = verbose
 
-    def check(self, source: str) -> Optional[str]:
+    def check(self, source: str, optional: Any) -> Optional[str]:
         """
         Run pydocstyle on the specified source.
 
         :param source: The source file or directory to check (str)
+        :param optional: Optional parameter for compatibility with other plugins (Any)
         :return: The pydocstyle output, if any (Optional[str]).
         :raises EnvironmentError: If pydocstyle is not available in the system's PATH.
         """
@@ -203,10 +213,12 @@ def main():
                         help="Increase output verbosity")
     parser.add_argument("-s", "--source", required=True,
                         help="The source file or directory to check")
+    parser.add_argument("-S", "--scores-less-than", required=False,
+                        help="Report scores less than given number (pylint only)")
     args = parser.parse_args()
 
     # Create a CodeChecker instance and register plugins
-    code_checker = CodeChecker(verbose=args.verbose)
+    code_checker = CodeChecker(verbose=args.verbose, optional=args.scores_less_than)
     code_checker.register_plugin("pylint", PylintPlugin)
     code_checker.register_plugin("flake8", Flake8Plugin)
     code_checker.register_plugin("pydocstyle", PyDocStylePlugin)
