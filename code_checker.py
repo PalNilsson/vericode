@@ -57,6 +57,24 @@ class PylintPlugin:
         self.verbose = verbose
         self.scorelimit = -1.0  # 8.0  # the score must be at least this number for the test to succeed
 
+    def get_source_files(self, source: str) -> list[str]:
+        """
+        Get a list of Python source files in the specified directory.
+
+        :param source: The source file or directory to check.
+        :return: A list of Python source files (list[str]).
+        """
+        if shutil.os.path.isdir(source):
+            source_files = []
+            for root, dirs, files in shutil.os.walk(source):
+                for file in files:
+                    if file.endswith(".py"):
+                        source_files.append(os.path.join(root, file))
+        else:
+            source_files = [source]
+
+        return source_files
+
     def check(self, source: str) -> Optional[str]:
         """
         Run pylint on the specified source and extract the pylint score.
@@ -72,14 +90,7 @@ class PylintPlugin:
             print(f"Running pylint checks on {source}...")
 
         # If source is a directory, find all files with a .py extension
-        if shutil.os.path.isdir(source):
-            source_files = []
-            for root, dirs, files in shutil.os.walk(source):
-                for file in files:
-                    if file.endswith(".py"):
-                        source_files.append(os.path.join(root, file))
-        else:
-            source_files = [source]
+        source_files = self.get_source_files(source)
 
         scores = []
         score_at_least_eight = 0
