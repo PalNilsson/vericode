@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -72,8 +73,13 @@ class PylintPlugin:
 
         # If source is a directory, find all files with a .py extension
         if shutil.os.path.isdir(source):
-            source_files = [f for f in shutil.os.listdir(source) if f.endswith(".py")]
-            source_files = [shutil.os.path.join(source, f) for f in source_files]
+            #source_files = [f for f in shutil.os.listdir(source) if f.endswith(".py")]
+            source_files = []
+            for root, dirs, files in shutil.os.walk(source):
+                for file in files:
+                    if file.endswith(".py"):
+                        source_files.append(os.path.join(root, file))
+            #source_files = [shutil.os.path.join(source, f) for f in source_files]
         else:
             source_files = [source]
 
