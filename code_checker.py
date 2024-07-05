@@ -43,7 +43,7 @@ class CodeChecker:
         :raises ValueError: If the specified checker is not registered.
         """
         if checker in self.plugins:
-            plugin = self.plugins[checker](self.verbose)
+            plugin = self.plugins[checker](verbose=self.verbose, optional=self.optional)
             return plugin.check(source)
 
         raise ValueError(f"Checker '{checker}' is not registered.")
@@ -114,7 +114,7 @@ class PylintPlugin:
             score = score_match.group(1) if score_match else "Score not found"
             if score != "Score not found":
                 # only report scores less than the given number
-                if self.optional and isinstance(self.optional, float):
+                if self.optional and isinstance(self.optional, str):
                     if float(score) <= float(self.optional):
                         print(f"{filename}: {score}")
                 else:  # normal processing
@@ -186,12 +186,11 @@ class PyDocStylePlugin:
         self.verbose = verbose
         self.optional = optional
 
-    def check(self, source: str, optional: Any) -> Optional[str]:
+    def check(self, source: str) -> Optional[str]:
         """
         Run pydocstyle on the specified source.
 
         :param source: The source file or directory to check (str)
-        :param optional: Optional parameter for compatibility with other plugins (Any)
         :return: The pydocstyle output, if any (Optional[str]).
         :raises EnvironmentError: If pydocstyle is not available in the system's PATH.
         """
