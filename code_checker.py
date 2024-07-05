@@ -11,8 +11,6 @@ from typing import Optional, Any
 class CodeChecker:
     """A class to manage and run code checking plugins."""
 
-    optional = None
-
     def __init__(self, verbose: bool = False, optional: Any = None) -> None:
         """
         Initialize the CodeChecker with an optional verbosity setting.
