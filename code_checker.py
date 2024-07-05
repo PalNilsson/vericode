@@ -97,7 +97,7 @@ class PylintPlugin:
                 scores.append(score)
 
         if scores:
-            return f"Average pylint score: {sum(map(float, scores)) / len(scores)}"
+            return f"Average pylint score: {sum(map(float, scores)) / len(scores)}\nNumber of files processed: {len(scores)}"
 
         return result.stdout
 
