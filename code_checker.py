@@ -77,9 +77,10 @@ class PylintPlugin:
         else:
             source_files = [source]
 
+        scores = []
+
         # Run pylint and capture the output
         for filename in source_files:
-            #path = os.path.join(source, filename)
             result = subprocess.run(["pylint", filename], capture_output=True, text=True)
             if self.verbose:
                 print(result.stdout)
@@ -93,6 +94,10 @@ class PylintPlugin:
                 if float(score) < self.scorelimit:
                     print("Pylint check failed.")
                     return None
+                scores.append(score)
+
+        if scores:
+            return f"Average pylint score: {sum(map(float, scores)) / len(scores)}"
 
         return result.stdout
 
@@ -183,9 +188,12 @@ def main():
 
     # Run the code checker
     try:
-        _ = code_checker.run_check(args.source, args.tool)
+        stdout = code_checker.run_check(args.source, args.tool)
     except (ValueError, EnvironmentError) as e:
         print(f"Error: {e}")
+    else:
+        if stdout:
+            print(stdout)
 
 
 if __name__ == "__main__":
