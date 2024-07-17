@@ -11,13 +11,14 @@ The tool can be used by running the following command:
 
 Standard flake8 test of the code in the given directory:
 
-<code>python3 code_checker.py -t flake8 -s <i>directory</i></code>
+<code>python3 code_checker.py -t flake8 -s <i>directory or file</i></code>
 
-Standard pylint test of the code in the given directory:
+Standard pylint test of the code in the given directory. In this mode, the tool reports processed files, their individual
+pylint scores and the average score for the directory:
 
-<code>python3 code_checker.py -t pylint -s <i>directory</i></code>
+<code>python3 code_checker.py -t pylint -s <i>directory or file</i></code>
 
 Pure pylint error reporting:
 
-<code>python3 code_checker.py -E -t pylint -s <i>directory</i></code>
+<code>python3 code_checker.py -E -t pylint -s <i>directory or file</i></code>
 
