@@ -121,7 +121,8 @@ class PylintPlugin:
 
         return errors
 
-    def get_scores(self, stdout: str, filename: str, scores: list, score_at_least_eight: int, score_at_least_nine: int) -> tuple:
+    def get_scores(self, stdout: str, filename: str, scores: list, score_at_least_eight: int,
+                   score_at_least_nine: int, current: int, total: int) -> tuple:
         """
         Extract the pylint score from the output and update the scores list.
 
@@ -130,6 +131,8 @@ class PylintPlugin:
         :param scores: scores list (list)
         :param score_at_least_eight: score of at least 8.0 (int)
         :param score_at_least_nine: score of at least 9.0 (int)
+        :param current: current file number (int)
+        :param total: total number of files (int)
         :return: scores list, score_at_least_eight, score_at_least_nine (tuple).
         """
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
@@ -140,7 +143,7 @@ class PylintPlugin:
                 if float(score) <= float(self.optional):
                     print(f"{filename}: {score}")
             else:  # normal processing
-                print(f"{filename}: {score}")
+                print(f"[{current}/{total}] {filename}: {score}")
                 if float(score) >= 8.0:
                     score_at_least_eight += 1
                 if float(score) >= 9.0:
@@ -150,7 +153,8 @@ class PylintPlugin:
                         f"Pylint check failed since {filename} has a score of {score} which is less than {self.scorelimit}")
                     return None
                 scores.append(score)
-
+        else:
+            print(f"[{current}/{total}] Score not found for {filename}")
         return scores, score_at_least_eight, score_at_least_nine
 
     def check(self, source: str) -> Optional[str]:
@@ -179,7 +183,10 @@ class PylintPlugin:
         errors = 0
 
         # Run pylint and capture the output
+        total = len(source_files)
+        current = 1
         for filename in source_files:
+
             cmd = self.get_command(filename)
             result = subprocess.run(cmd, capture_output=True, text=True)
             if self.verbose:
@@ -193,7 +200,8 @@ class PylintPlugin:
 
             # Extracting the pylint score using regex
             scores, score_at_least_eight, score_at_least_nine = (
-                self.get_scores(result.stdout, filename, scores, score_at_least_eight, score_at_least_nine))
+                self.get_scores(result.stdout, filename, scores, score_at_least_eight, score_at_least_nine, current, total))
+            current += 1
 
         if scores:
             average = round(sum(map(float, scores)) / len(scores), 2)
