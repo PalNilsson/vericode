@@ -20,5 +20,8 @@ pylint scores and the average score for the directory:
 
 Pure pylint error reporting:
 
-<code>python3 code_checker.py -E -t pylint -s <i>directory or file</i></code>
+<code>python3 code_checker.py --errors-only -t pylint -s <i>directory or file</i></code>
 
+Only report files that have a pylint score below a certain threshold:
+
+<code>python3 code_checker.py --scores-less-than <i>threshold</i> -t pylint -s <i>directory or file</i></code>

@@ -189,7 +189,8 @@ class PylintPlugin:
                 self.get_scores(result.stdout, filename, scores, score_at_least_eight, score_at_least_nine))
 
         if scores:
-            message = (f"Average pylint score: {sum(map(float, scores)) / len(scores)}\n"
+            average = round(sum(map(float, scores)) / len(scores), 2)
+            message = (f"Average pylint score: {average}\n"
                        f"Number of files with a score of at least 8.0: {score_at_least_eight}\n"
                        f"Number of files with a score of at least 9.0: {score_at_least_nine}\n"
                        f"Number of files processed: {len(scores)}")
