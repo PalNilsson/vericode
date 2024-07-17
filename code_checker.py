@@ -290,6 +290,8 @@ def main():
                         help="Report scores less than given number (pylint only)")
     parser.add_argument("-E", "--errors-only", action="store_true", required=False,
                         help="Tool will only report pure errors")
+    parser.add_argument("-c", "--select", required=False,
+                        help="Select a particular error code to check for")
     args = parser.parse_args()
 
     # Create a CodeChecker instance and register plugins
