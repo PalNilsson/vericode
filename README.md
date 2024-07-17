@@ -36,6 +36,7 @@ Standard pydocstyle test of the code in the given directory:
 
 # Limitations
 
-* Currently, only one directory or file can be processed at a time. If a directory is given, the tool will process all
+* Only one directory or file can be processed at a time. If a directory is given, the tool will process all
 files in the directory and its subdirectories.
+* --select flag is only supported for flake8 tests.
 
