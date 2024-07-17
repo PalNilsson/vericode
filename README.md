@@ -26,8 +26,12 @@ Only report files that have a pylint score below a certain threshold:
 
 <code>python3 code_checker.py --scores-less-than <i>threshold</i> -t pylint -s <i>directory or file</i></code>
 
+Standard pydocstyle test of the code in the given directory:
+
+<code>python3 code_checker.py -t pydocstyle -s <i>directory or file</i></code>
+
 # Limitations
 
-Currently, only one directory or file can be processed at a time. If a directory is given, the tool will process all
+* Currently, only one directory or file can be processed at a time. If a directory is given, the tool will process all
 files in the directory and its subdirectories.
 
