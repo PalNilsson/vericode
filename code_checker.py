@@ -240,7 +240,11 @@ class Flake8Plugin:
         if self.verbose:
             print(f"Running flake8 checks on {source}...")
 
-        result = subprocess.run(["flake8", source], capture_output=True, text=True)
+        cmd = ["flake8"]
+        if self.select:
+            cmd.extend(["--select", self.select, '--disable-noqa'])
+        cmd.append(source)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         if self.verbose:
             print(result.stdout)
             print(result.stderr)

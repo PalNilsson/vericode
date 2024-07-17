@@ -13,6 +13,10 @@ Standard flake8 test of the code in the given directory:
 
 <code>python3 code_checker.py -t flake8 -s <i>directory or file</i></code>
 
+Only report files that have a certain flake8 error:
+
+<code>python3 code_checker.py --select <i>error_code</i> -t flake8 -s <i>directory or file</i></code>
+
 Standard pylint test of the code in the given directory. In this mode, the tool reports processed files, their individual
 pylint scores and the average score for the directory:
 
