@@ -135,13 +135,14 @@ class PylintPlugin:
         :param total: total number of files (int)
         :return: scores list, score_at_least_eight, score_at_least_nine (tuple).
         """
+        optional = self.optional and isinstance(self.optional, str)
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
         score = score_match.group(1) if score_match else "Score not found"
         if score != "Score not found":
             # only report scores less than the given number
-            if self.optional and isinstance(self.optional, str):
+            if optional:
                 if float(score) <= float(self.optional):
-                    print(f"{filename}: {score}")
+                    print(f"[{current}/{total}] {filename}: {score}")
             else:  # normal processing
                 print(f"[{current}/{total}] {filename}: {score}")
                 if float(score) >= 8.0:
@@ -154,7 +155,9 @@ class PylintPlugin:
                     return None
                 scores.append(score)
         else:
-            print(f"[{current}/{total}] Score not found for {filename}")
+            if not optional:
+                print(f"[{current}/{total}] Score not found for {filename}")
+
         return scores, score_at_least_eight, score_at_least_nine
 
     def check(self, source: str) -> Optional[str]:
