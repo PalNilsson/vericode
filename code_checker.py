@@ -11,18 +11,20 @@ from typing import Optional, Any
 class CodeChecker:
     """A class to manage and run code checking plugins."""
 
-    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False, select: str = None) -> None:
         """
         Initialize the CodeChecker with an optional verbosity setting.
 
         :param verbose: Whether to print detailed output (bool)
         :param optional: Optional parameter for compatibility with other plugins (Any).
-        :param errorsonly: Whether to report only errors (bool).
+        :param errorsonly: Whether to report only errors (bool)
+        :param select: Select a particular error code to check for (str).
         """
         self.plugins: dict[str, type] = {}
         self.verbose = verbose
         self.optional = optional
         self.errorsonly = errorsonly
+        self.select = select
 
     def register_plugin(self, name: str, plugin_module: type) -> None:
         """
@@ -43,7 +45,10 @@ class CodeChecker:
         :raises ValueError: If the specified checker is not registered.
         """
         if checker in self.plugins:
-            plugin = self.plugins[checker](verbose=self.verbose, optional=self.optional, errorsonly=self.errorsonly)
+            plugin = self.plugins[checker](verbose=self.verbose,
+                                           optional=self.optional,
+                                           errorsonly=self.errorsonly,
+                                           select=self.select)
             return plugin.check(source)
 
         raise ValueError(f"Checker '{checker}' is not registered.")
@@ -52,17 +57,19 @@ class CodeChecker:
 class PylintPlugin:
     """A plugin to run pylint checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False, select: str = None) -> None:
         """
         Initialize the PylintPlugin with an optional verbosity setting.
 
         :param verbose: Whether to print detailed output (bool)
         :param optional: Optional parameter for compatibility with other plugins (Any)
-        :param errorsonly: Whether to report only errors (bool).
+        :param errorsonly: Whether to report only errors (bool)
+        :param select: Select a particular error code to check for (str).
         """
         self.verbose = verbose
         self.optional = optional
         self.errorsonly = errorsonly
+        self.select = select
         self.scorelimit = -1.0  # 8.0  # the score must be at least this number for the test to succeed
 
     def get_source_files(self, source: str) -> list[str]:
@@ -205,17 +212,19 @@ class PylintPlugin:
 class Flake8Plugin:
     """A plugin to run flake8 checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False, select: str = None) -> None:
         """
         Initialize the Flake8Plugin with an optional verbosity setting.
 
         :param verbose: Whether to print detailed output (bool)
         :param optional: Optional parameter for compatibility with other plugins (Any)
         :param errorsonly: Whether to report only errors (bool).
+        :param select: Select a particular error code to check for (str).
         """
         self.verbose = verbose
         self.optional = optional
         self.errorsonly = errorsonly
+        self.select = select
 
     def check(self, source: str) -> Optional[str]:
         """
@@ -242,17 +251,19 @@ class Flake8Plugin:
 class PyDocStylePlugin:
     """A plugin to run pydocstyle checks on a source file or directory."""
 
-    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False) -> None:
+    def __init__(self, verbose: bool = False, optional: Any = None, errorsonly: bool = False, select: str = None) -> None:
         """
         Initialize the PyDocStylePlugin with an optional verbosity setting.
 
         :param verbose: Whether to print detailed output (bool)
         :param optional: Optional parameter for compatibility with other plugins (Any)
-        :param errorsonly: Whether to report only errors (bool).
+        :param errorsonly: Whether to report only errors (bool)
+        :param select: Select a particular error code to check for (str).
         """
         self.verbose = verbose
         self.optional = optional
         self.errorsonly = errorsonly
+        self.select = select
 
     def check(self, source: str) -> Optional[str]:
         """
@@ -295,7 +306,10 @@ def main():
     args = parser.parse_args()
 
     # Create a CodeChecker instance and register plugins
-    code_checker = CodeChecker(verbose=args.verbose, optional=args.scores_less_than, errorsonly=args.errors_only)
+    code_checker = CodeChecker(verbose=args.verbose,
+                               optional=args.scores_less_than,
+                               errorsonly=args.errors_only,
+                               select=args.select)
     code_checker.register_plugin("pylint", PylintPlugin)
     code_checker.register_plugin("flake8", Flake8Plugin)
     code_checker.register_plugin("pydocstyle", PyDocStylePlugin)
