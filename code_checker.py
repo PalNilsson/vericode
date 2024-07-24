@@ -156,7 +156,7 @@ class PylintPlugin:
                 scores.append(score)
         else:
             if not optional:
-                print(f"[{current}/{total}] Score not found for {filename}")
+                print(f"[{current}/{total}] Score not found for {filename} (skipped)")
 
         return scores, score_at_least_eight, score_at_least_nine
 
