@@ -131,9 +131,9 @@ class PylintPlugin:
         :param n_score_at_least: score of at least the target score, typically 8.0 (int)
         :param current: current file number (int)
         :param total: total number of files (int)
-        :return: scores list, score_at_least (tuple).
+        :return: scores list, n_score_at_least (tuple).
         """
-        # for pylint, the optional parameter is used to report scores less than the given number
+        # for pylint, the optional parameter is used to set the target score
         target_score = self.optional and isinstance(self.optional, str)
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
         score = score_match.group(1) if score_match else "Score not found"
@@ -175,6 +175,7 @@ class PylintPlugin:
 
         scores = []
         target_score = self.optional and isinstance(self.optional, str)
+        n_score_at_least = 0
         errors = 0
 
         # Run pylint and capture the output
