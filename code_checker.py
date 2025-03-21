@@ -3,9 +3,13 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Optional, Any
+from typing import Any
 
 """A tool to run code checking plugins on a source file or directory."""
+
+# WARNING: this tools is in early development. Only the pylint test will work as expected.
+# It should be possible to use is in a GitHub Action. The other tools are not yet fully implemented.
+version = "1.0.0"
 
 
 class CodeChecker:
@@ -35,13 +39,13 @@ class CodeChecker:
         """
         self.plugins[name] = plugin_module
 
-    def run_check(self, source: str, checker: str) -> Optional[str]:
+    def run_check(self, source: str, checker: str) -> tuple[int, str]:
         """
         Run the specified checker plugin on the given source.
 
         :param source: The source file or directory to check (str)
         :param checker: The name of the checker plugin to use (str)
-        :return: The result of the check, if any (Optional[str])
+        :return: The result of the check, exit code (int), messages (str).
         :raises ValueError: If the specified checker is not registered.
         """
         if checker in self.plugins:
@@ -120,7 +124,7 @@ class PylintPlugin:
 
         return errors
 
-    def get_scores(self, stdout: str, filename: str, scores: list, n_score_at_least: int,
+    def get_scores(self, stdout: str, filename: str, scores: list, target_score: float, n_above_target: int,
                    current: int, total: int) -> tuple:
         """
         Extract the pylint score from the output and update the scores list.
@@ -128,44 +132,46 @@ class PylintPlugin:
         :param stdout: line stdout of the pylint command (std)
         :param filename: filename of the source file (str)
         :param scores: scores list (list)
-        :param n_score_at_least: score of at least the target score, typically 8.0 (int)
+        :param target_score: target score to compare against (float)
+        :param n_above_target: score of at least the target score, typically 8.0 (int)
         :param current: current file number (int)
         :param total: total number of files (int)
-        :return: scores list, n_score_at_least (tuple).
+        :return: scores list, n_above_target (tuple).
         """
         # for pylint, the optional parameter is used to set the target score
-        target_score = self.optional and isinstance(self.optional, str)
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
         score = score_match.group(1) if score_match else "Score not found"
+
         if score != "Score not found":
             # only report scores less than the given number
             if target_score:
-                if float(score) <= float(target_score):
+                if float(score) <= target_score:
+                    # always print in this case
                     print(f"[{current}/{total}] {filename}: {score}")
-            else:  # normal processing
-                print(f"[{current}/{total}] {filename}: {score}")
-                if float(score) >= target_score:
-                    n_score_at_least += 1
+                else:
+                    # only print in verbose mode
+                    if self.verbose:
+                        print(f"[{current}/{total}] {filename}: {score}")
+                    n_above_target += 1
                 scores.append(score)
         else:
             if not target_score:
                 print(f"[{current}/{total}] Score not found for {filename} (skipped)")
 
-        return scores, n_score_at_least
+        return scores, n_above_target
 
-    def check(self, source: str) -> Optional[str]:
+    def check(self, source: str) -> tuple[int, str]:
         """
         Run pylint on the specified source and extract the pylint score.
 
         :param source: The source file or directory to check.
-        :return: The pylint output or score, based on verbosity.
+        :return: Exit code (int), the pylint output or score, based on verbosity (str).
         :raises EnvironmentError: If pylint is not available in the system's PATH.
         """
         if not shutil.which("pylint"):
             raise EnvironmentError("pylint is not available in the system's PATH")
 
-        if self.verbose:
-            print(f"Running pylint checks on {source}...")
+        print(f"Running pylint checks on {source}...")
 
         if self.errorsonly:
             print("Running in errors-only mode")
@@ -173,9 +179,16 @@ class PylintPlugin:
         # If source is a directory, find all files with a .py extension
         source_files = self.get_source_files(source)
 
+        def get_target_score(optional: str) -> float:
+            try:
+                return float(optional)
+            except ValueError as e:
+                print(f"failed to convert {optional} to float: {e}")
+                return 0
+
         scores = []
-        target_score = self.optional and isinstance(self.optional, str)
-        n_score_at_least = 0
+        target_score = get_target_score(self.optional)
+        n_above_target = 0
         errors = 0
 
         # Run pylint and capture the output
@@ -195,20 +208,25 @@ class PylintPlugin:
                 continue
 
             # Extracting the pylint score using regex
-            scores, n_score_at_least = self.get_scores(result.stdout, filename, scores, n_score_at_least, current, total)
+            scores, n_above_target = self.get_scores(result.stdout, filename, scores, target_score, n_above_target, current, total)
             current += 1
 
         if scores:
+            n_below_target = len(scores) - n_above_target
+            exit_code = 1 if n_below_target > 0 else 0
             average = round(sum(map(float, scores)) / len(scores), 2)
             message = (f"Average pylint score: {average}\n"
-                       f"Number of files with a score of at least {target_score}: {n_score_at_least}\n"
+                       f"Number of files with a score of at least {target_score}: {n_above_target}\n"
+                       f"Number of files with a score less than {target_score}: {n_below_target}\n"
                        f"Number of files processed: {len(scores)}")
-            return message
+            return exit_code, message
+        else:
+            exit_code = 1
 
         if self.errorsonly:
             return f"Number of errors: {errors}"
 
-        return result.stdout
+        return exit_code, result.stdout
 
 
 class Flake8Plugin:
@@ -228,12 +246,12 @@ class Flake8Plugin:
         self.errorsonly = errorsonly
         self.select = select
 
-    def check(self, source: str) -> Optional[str]:
+    def check(self, source: str) -> tuple[int, str]:
         """
         Run flake8 on the specified source.
 
         :param source: The source file or directory to check (str)
-        :return: The flake8 output, if any (Optional[str]).
+        :return: Exit code (int), the flake8 output (str).
         :raises EnvironmentError: If flake8 is not available in the system's PATH.
         """
         if not shutil.which("flake8"):
@@ -251,7 +269,7 @@ class Flake8Plugin:
             print(result.stdout)
             print(result.stderr)
 
-        return result.stdout if not self.verbose else None
+        return 0, result.stdout if not self.verbose else None
 
 
 class PyDocStylePlugin:
@@ -271,12 +289,12 @@ class PyDocStylePlugin:
         self.errorsonly = errorsonly
         self.select = select
 
-    def check(self, source: str) -> Optional[str]:
+    def check(self, source: str) -> tuple[int, str]:
         """
         Run pydocstyle on the specified source.
 
         :param source: The source file or directory to check (str)
-        :return: The pydocstyle output, if any (Optional[str]).
+        :return: Exit code (int), the pydocstyle output (str).
         :raises EnvironmentError: If pydocstyle is not available in the system's PATH.
         """
         if not shutil.which("pydocstyle"):
@@ -290,7 +308,7 @@ class PyDocStylePlugin:
             print(result.stdout)
             print(result.stderr)
 
-        return result.stdout if not self.verbose else None
+        return 0, result.stdout if not self.verbose else None
 
 
 def main():
@@ -322,12 +340,20 @@ def main():
 
     # Run the code checker
     try:
-        stdout = code_checker.run_check(args.source, args.tool)
+        exit_code, stdout = code_checker.run_check(args.source, args.tool)
     except (ValueError, EnvironmentError) as e:
         print(f"Error: {e}")
+        exit_code = 1
     else:
         if stdout:
             print(stdout)
+
+    if exit_code:
+        print("Code check failed")
+    else:
+        print("Code check passed")
+
+    exit(exit_code)
 
 
 if __name__ == "__main__":
