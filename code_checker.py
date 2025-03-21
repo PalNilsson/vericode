@@ -70,7 +70,6 @@ class PylintPlugin:
         self.optional = optional
         self.errorsonly = errorsonly
         self.select = select
-        self.scorelimit = -1.0  # 8.0  # the score must be at least this number for the test to succeed
 
     def get_source_files(self, source: str) -> list[str]:
         """
@@ -121,44 +120,38 @@ class PylintPlugin:
 
         return errors
 
-    def get_scores(self, stdout: str, filename: str, scores: list, score_at_least_eight: int,
-                   score_at_least_nine: int, current: int, total: int) -> tuple:
+    def get_scores(self, stdout: str, filename: str, scores: list, n_score_at_least: int,
+                   current: int, total: int) -> tuple:
         """
         Extract the pylint score from the output and update the scores list.
 
         :param stdout: line stdout of the pylint command (std)
         :param filename: filename of the source file (str)
         :param scores: scores list (list)
-        :param score_at_least_eight: score of at least 8.0 (int)
-        :param score_at_least_nine: score of at least 9.0 (int)
+        :param n_score_at_least: score of at least the target score, typically 8.0 (int)
         :param current: current file number (int)
         :param total: total number of files (int)
-        :return: scores list, score_at_least_eight, score_at_least_nine (tuple).
+        :return: scores list, score_at_least (tuple).
         """
-        optional = self.optional and isinstance(self.optional, str)
+        # for pylint, the optional parameter is used to report scores less than the given number
+        target_score = self.optional and isinstance(self.optional, str)
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
         score = score_match.group(1) if score_match else "Score not found"
         if score != "Score not found":
             # only report scores less than the given number
-            if optional:
-                if float(score) <= float(self.optional):
+            if target_score:
+                if float(score) <= float(target_score):
                     print(f"[{current}/{total}] {filename}: {score}")
             else:  # normal processing
                 print(f"[{current}/{total}] {filename}: {score}")
-                if float(score) >= 8.0:
-                    score_at_least_eight += 1
-                if float(score) >= 9.0:
-                    score_at_least_nine += 1
-                if float(score) < self.scorelimit:
-                    print(
-                        f"Pylint check failed since {filename} has a score of {score} which is less than {self.scorelimit}")
-                    return None
+                if float(score) >= target_score:
+                    n_score_at_least += 1
                 scores.append(score)
         else:
-            if not optional:
+            if not target_score:
                 print(f"[{current}/{total}] Score not found for {filename} (skipped)")
 
-        return scores, score_at_least_eight, score_at_least_nine
+        return scores, n_score_at_least
 
     def check(self, source: str) -> Optional[str]:
         """
@@ -181,8 +174,7 @@ class PylintPlugin:
         source_files = self.get_source_files(source)
 
         scores = []
-        score_at_least_eight = 0
-        score_at_least_nine = 0
+        target_score = self.optional and isinstance(self.optional, str)
         errors = 0
 
         # Run pylint and capture the output
@@ -202,15 +194,13 @@ class PylintPlugin:
                 continue
 
             # Extracting the pylint score using regex
-            scores, score_at_least_eight, score_at_least_nine = (
-                self.get_scores(result.stdout, filename, scores, score_at_least_eight, score_at_least_nine, current, total))
+            scores, n_score_at_least = self.get_scores(result.stdout, filename, scores, n_score_at_least, current, total)
             current += 1
 
         if scores:
             average = round(sum(map(float, scores)) / len(scores), 2)
             message = (f"Average pylint score: {average}\n"
-                       f"Number of files with a score of at least 8.0: {score_at_least_eight}\n"
-                       f"Number of files with a score of at least 9.0: {score_at_least_nine}\n"
+                       f"Number of files with a score of at least {target_score}: {n_score_at_least}\n"
                        f"Number of files processed: {len(scores)}")
             return message
 
