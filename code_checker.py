@@ -181,10 +181,13 @@ class PylintPlugin:
 
         def get_target_score(optional: str) -> float:
             try:
-                return float(optional)
+                if optional:
+                    return float(optional)
+                else:
+                    return 0.0
             except ValueError as e:
                 print(f"failed to convert {optional} to float: {e}")
-                return 0
+                return 0.0
 
         scores = []
         target_score = get_target_score(self.optional)
@@ -195,7 +198,6 @@ class PylintPlugin:
         total = len(source_files)
         current = 1
         for filename in source_files:
-
             cmd = self.get_command(filename)
             result = subprocess.run(cmd, capture_output=True, text=True)
             if self.verbose:
@@ -221,7 +223,7 @@ class PylintPlugin:
                        f"Number of files processed: {len(scores)}")
             return exit_code, message
         else:
-            exit_code = 1
+            exit_code = 1 if target_score > 0 else 0
 
         if self.errorsonly:
             return f"Number of errors: {errors}"
