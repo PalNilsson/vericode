@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vericode"
+version = "0.1.0"
+description = "Multi-language code verification tool"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name="Paul Nilsson", email="Paul.Nilsson@cern.ch" }
+]
+dependencies = [
+  "pylint",
+  "flake8",
+  "pydocstyle",
+  # other tools if needed
+]
+
+[project.scripts]
+vericode = "vericode.vericode:main"
