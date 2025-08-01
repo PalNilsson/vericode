@@ -29,7 +29,6 @@ from typing import Any
 
 # WARNING: this tools is in early development. Only the pylint test will work as expected.
 # It should be possible to use is in a GitHub Action. The other tools are not yet fully implemented.
-version = "1.0.0"
 
 
 class CodeChecker:
