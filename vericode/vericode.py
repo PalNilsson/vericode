@@ -161,7 +161,6 @@ class PylintPlugin:
         # for pylint, the optional parameter is used to set the target score
         score_match = re.search(r"Your code has been rated at ([0-9\.]+)/10", stdout)
         score = score_match.group(1) if score_match else "Score not found"
-
         if score != "Score not found":
             # only report scores less than the given number
             if target_score:
@@ -204,7 +203,7 @@ class PylintPlugin:
                 if optional:
                     return float(optional)
                 else:
-                    return 0.0
+                    return 10.0
             except ValueError as e:
                 print(f"failed to convert {optional} to float: {e}")
                 return 0.0
@@ -235,7 +234,9 @@ class PylintPlugin:
 
         if scores:
             n_below_target = len(scores) - n_above_target
-            exit_code = 1 if n_below_target > 0 else 0
+            exit_code = 1 if (n_below_target > 0 and target_score < 10) else 0
+            if exit_code:
+                print(f"Failed: found {n_below_target} files with a score less than target score {target_score}")
             average = round(sum(map(float, scores)) / len(scores), 2)
             message = (f"Average pylint score: {average}\n"
                        f"Number of files with a score of at least {target_score}: {n_above_target}\n"

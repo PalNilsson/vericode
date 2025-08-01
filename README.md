@@ -30,6 +30,8 @@ Only report files that have a pylint score below a certain threshold:
 
 <code>python3 vericode.py --scores-less-than <i>threshold</i> -t pylint -s <i>directory or file</i></code>
 
+In the case there are such files, the tool will print them out and consider the run failed.
+
 Standard pydocstyle test of the code in the given directory:
 
 <code>python3 vericode.py -t pydocstyle -s <i>directory or file</i></code>
