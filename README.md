@@ -2,6 +2,8 @@
 A plugin-based python tool that to be used with various code checkers. The tool currently has plugins for pylint, flake8 and
 pydocstyle. It will have support for TypeScript in the future.
 
+The code is in early development and is not yet ready for production use. It is intended to eventually be used with GitHub Actions to automatically check code quality in pull requests.
+
 # Installation
 
 The tool can be pip installed:
